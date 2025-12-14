@@ -1,14 +1,4 @@
-
----
-
-## **5. Интеграция с GitHub Actions и облаком**
-
-Теперь автоматизируем деплой через CI/CD.
-
-Файл `.github/workflows/deploy.yml`:
-
-```yaml
-name: Deploy Model to Cloud
+name: Model Deployment
 
 on:
   push:
@@ -18,18 +8,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
-
-      - name: Push image to registry
+      - name: Build and push Docker image
         run: |
+          docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
 
-      - name: Deploy to Cloud
+      - name: Deploy via API
         run: |
           curl -X POST https://api.cloudprovider/deploy \
             -H "Authorization: Bearer ${{ secrets.CLOUD_TOKEN }}" \
